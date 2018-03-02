@@ -1,0 +1,351 @@
+--
+\n is linefeed, Ctrl-j or character 012
+\r is carriage retrun, Ctrl-M or character 015
+--
+
+git:
+gitignore ignore untracked file only when tracking to add
+已经跟踪的文件不会忽略
+
+.gitignore: 支持通配符
+test:
+	./test
+	./xx/test
+	./test/xx
+	./xx/test/
+/test:
+	./test
+	./test/xx
+test/:
+	./test/xx
+	./xx/test/
+/test/:
+	./test/xx
+
+doc/*.pdf:
+	./doc/a.pdf
+	./doc/b.pdf
+doc/*/*.pdf:
+	./doc/xx/a.pdf
+	./doc/xx/b.pdf
+doc/**/*.pdf:
+	./doc/a.pdf
+	./doc/b.pdf
+	./doc/xx/a.pdf
+	./doc/xx/b.pdf
+
+git diff --cached/staged: stage(commited)和版本库比较
+git diff: working tree(unstaged)和 stage比较,若stage里没有则和版本库比较, 即只要工作区发生改变的,就会有，stage有和stage比较，stage没有和respo比较
+
+git commit -a: 会包括delete
+
+git rm: 会untrack并删除工作区,相当于直接删除工作区文件并git add
+git mv: 相当于直接mv文件系统并git add
+git rm --cache: 只是untrack文件
+git rm \*~: 通配符需要转义，不用bash的
+
+git commit --amend: 一个全新的快照添加并覆盖原来的，原来的被从历史里删除（sha-1摘要变化了), 尽管不再历史里，还是有办法恢复到这个提交（git数据恢复篇)
+
+git checkout file: 清除工作区修改(未add到暂存区的快照叫工作区），比较危险，除非是非常确定的情况下，否则拉个分支再清除比较安全
+
+alpha: 内部版本
+beta: 测试版
+rc: 即将作为正式版发布
+lts: 长期维护
+
+git add: stage快照中对于修改过的文件copy了一份
+git commit: 快照直接指向stage,对象里包括这个指针、author's name and email, commit message ...
+
+.git/object：对象库，存放所有对象：文件（该目录最大的原因）（不只是工作目录的文件，只要曾经被add的文件都会被存放，stage快照中修改过的文件被存为新的，未修改被add的直接引用，,,所以包括被修改过的副本，被删除的也会被保留，!!!!只要曾经被add的，校验和不存在的，就会被添加!!!!。 以sha-1校验和区分）; 文件树，存放快照文件结构,包含的指向若干文件对象等; 提交对象，包括tree指针指向前面那个树的校验和，parent指针指向该分支上一个提交对象的校验和,username, email等
+tip: 文件被编译为二进制，使用git cat-file <checksum>查看
+
+git checkout -- file: 丢弃工作区的修改，将modified的文件的修改复原（可能复原到和staged的一样，或和版本库一样)
+一种是readme.txt自修改后还没有被放到暂存区，现在，撤销修改就回到和版本库一模一样的状态；
+一种是readme.txt已经添加到暂存区后，又作了修改，现在，撤销修改就回到添加到暂存区后的状态。
+总之，就是让这个文件回到最近一次git commit或git add时的状态。
+
+./git/object里不包括staged的快照（tree对象）,stage的信息(目录结构快照)保存在.git/index
+使用git ls-files --stage(index文件被编译为二进制文件)查看：
+100644 95ef7c6bd1c2d0a7ac268241dd4bd4b1415da423 0       .gitignore
+100644 f4bc36652eee71c7e127a40b68137235a2aeb6e4 0       go1.9.2.linux-amd64.tar.gz
+100644 529ba277c064f3d312a647eb5247d1ca3421eb6e 0       main.c
+
+当commit后会生成commit的对象和tree对象(文件名为校验和，tree的文件内容如下） 在object目录下，tree对象就是由上面的index得来：
+tree对象: 
+100644 blob 95ef7c6bd1c2d0a7ac268241dd4bd4b1415da423    .gitignore
+100644 blob f4bc36652eee71c7e127a40b68137235a2aeb6e4    go1.9.2.linux-amd64.tar.gz
+100644 blob 529ba277c064f3d312a647eb5247d1ca3421eb6e    main.c
+
+
+linux: ls -lh 
+第2个参数: 
+1, 若为文件，表示硬链接数
+2, 若为目录，表示有多少个子目录（包括.和..，所以至少2, 同时包括隐藏）
+
+
+git pull origin next:master 取回主机的next分支与本地的master分支合并，省略则与当前分支合并
+
+git push -u origin master: 关联远程（上游）
+
+git push origin <本地分支>:<远程分支>: 远程分支省略则推送到与本地分支对应的上游分支通常为<远程名>/<本地分支名>（本地跟踪远程的分支）, 如果该远程分支不存在，则会被新建（和本地分支同名）
+若本地分支为空 git push origin :<远程分支> 则删除远程分支  == git push origin --delete <master>
+
+git push origin 将当前分支推到origin主机对应的分支
+
+go: 一个目录只能有一个包若发现两个包（如同一个目录有两个文件分别为package a, package b)，编译不会通过
+一个目录的go文件的包名一般和目录名一样（可以不一样，import的时候import目录，包名还是go文件的包名,容易引起混乱)
+
+go install github.com/test: (或者cd $GOPATH/src/github.com/test && go install)
+1. 将$GOPATH/src/github.com/test的源文件进行编译，包编译成.a放到相应的$GOPATH/pkg/github.com/test下，main包编译成可执行文件到bin/test(没有github.com/test)下
+go get github.com/test: (会递归clone依赖） go get -u 确保所有包和依赖包都是最新的，然后重新编译安装他们
+1. git clone https://github.com/test $GOPATH/github.com/test
+2. git install github.com/test
+
+
+
+foo := []rune //slice
+foo := [3]rune //array
+foo := [...]rune //array
+
+unsafe.sizeof([]rune) // 24 ( len(8) + cap(8) + data(8, a point to real array) )
+unsafe.sizeof([3]rune) // 12 ( 3 x 4(int32) )
+
+slice = append(slice, element) // 给slice追加一个元素（len加1）， 若cap足够，则直接在原底层数组上, cap不变; 若cap不够，则另外申请一个底层数组（cap可能是原来的两倍或其他策略），将之前的元素copy到新数组，并追加，cap改变; 无论是哪一种，都会将返回 ‘新的’ slice, 就的不变， 通常需要将‘新的’赋给原slice
+
+string: 不可改变的字节序列（只读[]byte）， UTF8编码
+
+
+字面量：
+十进制： 123
+八进制： 0327(第一位: 阿拉伯数字 零)
+十六进制： 0x32af 
+
+fmt.Printf("
+1) %b ：二进制(不会根据变量占有内存在前面补0变成固定长度)
+2) %d :	十进制
+3) %x : 
+
+
+golang not allow : 
+1) 连等
+2) 三元运算符 ?
+
+
+
+js: 
+0 == "" // true 
+0 == "0" //true
+0 == "1" //false
+0 == [] //true
+0 == [0] //true
+if ("")  // if (false)
+if ([]) // if (true)
+
+
+快的程序往往是伴随着较少的内存分配
+
+
+查看某命令（文件）属于哪个包：
+pacman -Qo file
+查看某软件包的文件信息：
+pacman -Ql package
+软件包的其他信息：
+pacman -Qi package
+
+查看可执行文件依赖的共享库(以gtk/qt为例)：
+ldd $(which evince) | grep 'gtk\|qt'
+查看进程的调用的动态共享库so：
+pmap -p $pid | grep 'gtk|Qt'
+
+
+test中使用全局是安全的, go test命令并不会同时并发地执行多个测试
+
+生成目标代码（不链接生成可执行）： gcc -c demo.c => demo.o
+生成静态链接库: ar rv libx.a x1.o x2.o ..
+生成共享库： gcc -shared -o libx.so x1.o x2.o (通常-fPIC)
+
+链接（共享/静）库： gcc -lx main.o -o exe (同时存在libx.a, libx.so,优先so, 默认库gcc_s等以动态形式链接)
+强制全部静态链接： gcc -static -lx main.o -o exe (需要libx.a, 包括了动态连接时（不指明static时）的ld.so, gcc_s 等默认共享库都会被静态链接，所以出来的可执行文件较大,完全独立）
+部分强制静态链接： gcc -Wl,Bstatic -lx ( 需要带上-Wl,Bdynamic -lgcc_s，否则编译不通过，且这种方法一般没有gcc_s的静态库, 要静态链接这一部分占时用全部静态-static）
+动态部分： gcc -Wl,Bdynamic -lx (这会导致-static失效）
+
+静态链接库： .a, 在链接成可执行文件时，静态链接库被链接进程序且运行不再依赖与这个.a
+共享库(动态链接）: .so , 链接成可执行文件时指明依赖的共享库，共享库的内容不会被写进程序，运行可执行文件时需要依赖共享库so, 并且在程序启动时就加载(在指明依赖链接库时优先使用共享库，除非强制指明静态链接)
+动态加载共享库：void*dlopen (const char *libname, int flag); 不像动态链接的共享库，程序启动时就被ld.so寻找并装载，而是需要的时候由程序函数调用的共享库so
+
+//如果要链接没有lib前缀的库文件，可以直接指定库的全名，无需加-L，-l选项
+//另外，当编译可执行文件需要链接多个静态库的情况：
+1、静态库是前后依赖关系，则依赖库靠前，被依赖的库靠后，如a依赖b，-la -lb
+2、静态库是相互依赖关系，则需要多次添加同一个库，如a依赖b，同时b依赖a，-la -lb -la
+3、有没有比较优雅的方式解决第2种情况，有，加链接的属性，如：-Xlinker --start-group -la -lb -Xlinker --end-group
+
+C:
+动态库装载：
+共享库的寻找和加载是由/lib/ld.so /lib/ld-linux.so实现的，ld.so在标准路径/lib, /usr/lib中寻找应用程序用到的共享库(用到非标准库中库的做法是将非标准库路径加入/etc/ld.so.conf,然后运行ldconfig生成/etc/ld.so.cache。ld.so加载共享库时，会从ld.so.cache查找。ld加载共享库的时候，也会差好LD_LIBRARY_PATH这个环境变量)
+
+
+ldd(不是一个可执行程序，是一个shell脚本): 打印一个执行程序的 共享库依赖关系。
+这个脚本通过设置一系列环境变量:
+"LD_TRACE_LOADED_OBJECTS、LD_WARN、LD_BIND_NOW、LD_LIBRARY_VERSION、LD_VERBOSE等。
+当LD_TRACE_LOADED_OBJECTS环境变量不为空时，任何可执行程序在运行时，它都会只显示模块的 dependency，而程序并不真正执行"
+如 export LD_TRACE_LOADED_OBJECTS=1; ls; 将只显示ls执行程序的依赖共享库。而不执行ls
+原理：
+通过ld-linux.so动态库装载器实现的,ld-linux.so模块会优先与executable模块程序工作，并获得控制权，因此上述环境变量被设置时，ld-linux.so选择显示可执行模块的依赖
+实际上可以直接执行ld-linux.so模块： /lib/ld-linux.so --list program  = ldd program
+
+那程序又是怎么找到ld-linux.so的： ld-linux.so的位置是写死在程序中的，gcc在编译程序时就写死在里面了。gcc写到程序中ld-linux.so的位置是可以改变的，通过修改gcc的spec文件
+
+运行时，ld-linux.so查找共享库的顺序
+（1）ld-linux.so.6在可执行的目标文件中被指定，可用readelf命令查看 
+（2）ld-linux.so.6缺省在/usr/lib和lib中搜索；当glibc安装到/usr/local下时，它查找/usr/local/lib
+（3）LD_LIBRARY_PATH环境变量中所设定的路径 
+（4）/etc/ld.so.conf（或/usr/local/etc/ld.so.conf）中所指定的路径，由ldconfig生成二进制的ld.so.cache中
+
+编译时，ld-linux.so查找共享库的顺序
+（1）ld-linux.so.6由gcc的spec文件中所设定 
+（2）gcc --print-search-dirs所打印出的路径，主要是libgcc_s.so等库。可以通过GCC_EXEC_PREFIX来设定 
+（3）LIBRARY_PATH环境变量中所设定的路径，或编译的命令行中指定的-L/usr/local/lib 
+（4）binutils中的ld所设定的缺省搜索路径顺序，编译binutils时指定。（可以通过“ld --verbose | grep SEARCH”来查看） 
+（5）二进制程序的搜索路径顺序为PATH环境变量中所设定。一般/usr/local/bin高于/usr/bin
+（6）编译时的头文件的搜索路径顺序，与library的查找顺序类似。一般/usr/local/include高于/usr/include
+
+
+=====================================================================
+gcc 编译的四大过程（预处理-编译-汇编-链接 ）
+
+     我们来编译一个hello world 程序。
+
+#include <stdio.h>
+
+int main(int argc,const char* argv[])
+
+{
+
+    printf("hello world!\n");
+
+    return 0;
+
+}
+1）预处理(Pre-processing)
+在该阶段，编译器将C源代码中的包含的头文件如stdio.h编译进来，用户可以使用gcc的选项”-E”进行查看。
+用法:#gcc -E main.c -o main.i
+作用：将main.c预处理输出main.i文件
+
+[user:test] ls
+main.c
+[user:test] gcc -E main.c -o main.i
+[user:test] ls
+main.c  main.i
+
+ 
+
+2)编译阶段(Compiling)
+第二步进行的是编译阶段，在这个阶段中，Gcc首先要检查代码的规范性、是否有语法错误等，以确定代码的实际要做的工作，在检查无误后，Gcc把代码翻译成汇编语言。用户可以使用”-S”选项来进行查看，该选项只进行编译而不进行汇编，生成汇编代码。
+选项 -S
+用法：[user]# gcc –S main.i –o main.s
+作用：将预处理输出文件main.i汇编成main.s文件。
+
+[user:test] ls
+main.c  main.i
+[user:test] gcc -S main.i -o main.s
+[user:test] ls
+main.c  main.i  main.s
+
+3)汇编阶段(Assembling)
+汇编阶段是把编译阶段生成的”.s”文件转成二进制目标代码.
+选项 -c
+用法：[user]# gcc –c main.s –o main.o
+作用：将汇编输出文件main.s编译输出main.o文件。
+
+[user:test] ls
+main.c  main.i  main.s
+[user:test] gcc -c main.s -o main.o
+[user:test] ls
+main.c  main.i  main.o  main.s
+
+4）链接阶段(Link)
+在成功编译之后，就进入了链接阶段。
+无选项链接
+用法：[user]# gcc main.o –o main.exe
+作用：将编译输出文件main.o链接成最终可执行文件main.elf
+
+[user:test] ls
+main.c  main.i  main.o  main.s
+[user:test] gcc main.o -o main.elf
+[user:test] ls
+main.c  main.elf*  main.i  main.o  main.s
+=======================================================================
+
+go build/install: 当前目录为项目目录
+go build/install [pack]: $GOPATH/src/pack为项目目录
+
+golang 项目自己的依赖包（不从互联网上get)
+放在项目下的vendor目录
+即使使用vendor，也必须在GOPATH中，在go的工具链中，你逃不掉GOPATH的
+
+那么查找依赖包路径的解决方案如下：
+    当前项目目录（先检查是否在$GOPATH/src/projec, 也是下面一条的前提)下的vendor目录。
+    向上级目录查找，直到找到src下的vendor目录。
+    在GOPATH下面查找依赖包。
+    在GOROOT目录下查找
+
+在使用vendor中，给出如下建议：
+
+    一个库工程（不包含main的package）不应该在自己的版本控制中存储外部的包在vendor\目录中，除非他们有特殊原因并且知道为什么要这么做。
+    在一个应用中，（包含main的package），建议只有一个vendor目录在代码库一级目录。
+
+上面建议的原因如下：
+
+    在目录结构中的每个包的实例，即使是同一个包的同一个版本，都会打到最终的二进制文件中，如果每个人都单独的存储自己的依赖包，会迅速导致生成文件的二进制爆发（binary bloat)
+    在一个目录的某个pacage类型，并不兼容在同一个package但是在不同目录的类型，即便是同一个版本的package，那意味着loggers，数据库连接，和其他共享的实例都没法工作。
+
+
+git 中某git仓库的工作目录下的子目录不能够有自己的git仓库，当一个子目录下有自己的git仓库，则该子目录工作区的所有文件和版本库不会被总版本库添加，若子目录需要有自己的版本控制，则通过子模块,为其添加子模块，总版本库通过.gitmodules知道哪些目录是子版本库，里面记录了子版本库目录以及对应的真实(远程)仓库url,总仓库不包含子模块的任何版本信息（文件，仓库等），当clone一个包含子模块的仓库时，会发现子模块所在目录是空的（工作区，.git仓库, git文件), 只有总工作区有一个.gitmodule文件被保留，需要执行git submodule init(会根据.gitmodules文件将url注册到目录）， git submodule update(这一步会在子目录创建工作区文件和.git文件，git文件记录真实的git的仓库地址，通常在总仓库目录下: .git/modules/相应的目录地址 , 总仓库下的modules目录用于存放所有其他子模块的本地仓库，统一管理（不单独放在他们工作区下）,这个modules目录也是git submodule update时创建的。
+.gitmodules文件的url若使用的是相对地址，则是相对总仓库的url，如别人clone这个总仓库时，那么就以clone的url为域名（有趣的是你这么干,子仓库真的存在于子目录下，而子目录任何东西不会被提交，当你push到远程，远程就再也拿不到这个仓库，或者当别人pull你，这个子模块的仓库会作为远程在.git/modules下，结构也不一样，反正种种问题，不建议使用相对地址子模块或者将一个仓库放在另一个仓库的子目录下）
+
+git 子模块：
+git submodule add [git地址] [到目录]
+会添加远程仓库到但前目录下指定的位置
+子模块git仓库不放在自己的仓库目录下，可以ls .git/ 没有这个目录，而有.git这个文件，这个文件指明了实际仓库的位置，cat .git可以看到仓库被放到了父模块的.git总仓库下的modules目录 下。
+同时在总仓库下生成一个.gitmodule文件，记录各个子模块项目路径了上游url,只有存在这个文件，git才能知道谁是子模块
+
+git diff: 工作区和stage比或和仓库比
+git diff --cached: stage和仓库比
+
+
+一个可能的包含子模块的tree快照
+git cat-file -p 55493783344510bdffa0c63bcedd3a054ac652df
+100644 blob 11ae4f2eef95dfe9219cee0d97cb6f372e349be4    .gitmodules
+100644 blob 4d51fa4e2aba7d68840dcdb059eca7a1719b8fed    candy.go
+100644 blob e69de29bb2d1d6434b8b29ae775ad8c2e48c5391    main.go
+160000 commit 392d907deb6503fdba6d81a8318662a8e6c36f8e  subcandy
+
+可以看到对于这个目录不是一个tree或blob记录，而是一个特殊的160000的commit,这个commit不存在于总仓库下（.git/subject）里没有，这存在于其对应的真实仓库（.gitmodules记录）的commit,所以总仓库版本控制子模块并不直接控制其文件，而是其仓库的commit
+
+git 针对工作区才能用的命令（裸仓库不能用）：
+git status
+git add 
+git submodule init
+针对仓库的命令：
+git log
+
+
+go build: 将丢弃除了最后的可执行文件之外所有的中间编译结果
+go install: 将保留每个包的编译成果：$GOPATH/pkg/../*.a, 这些成果当对应的包没有发生变化，go build 和go install 都不会重新编译这些包，而是直接用这些，go build 可以用 go build -i 强制重新编译依赖(go build 也会去用.a,但他本身不会保留.a)
+
+
+go特殊注释：
+1.
+import "C" 以上的行, 都有意义，且作为C语句： 如
+// #include 
+// #include 
+// ..
+import "C"
+
+2. 放在文件第一行
+// +build ignore
+不编译这个文件
+// +build linux darwin
+针对不同平台和处理器类型使用不同代码
+
+
