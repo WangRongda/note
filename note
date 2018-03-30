@@ -351,11 +351,12 @@ import "C"
 官方（推荐）：
 放在$GOPATH/src下，作为非本地包
 优点： 可以使用go install, go get等go工具
-缺点： 比较不灵活，有些东西必须要个按照golang的规定，如不能引用本地包(即import使用相对路径），项目自用包(非网上的包, 即作为项目的一份，而不是从网上去clone，从而保证版本稳定等优点)必须在vendor下, 项目必须放在$GOPATH/src/xx下，等
+缺点： 比较不灵活，有些东西必须要个按照golang的规定，如不能引用本地包(即import使用相对路径, 提示错误：local import "./xx" in non-local package ，在这个路径下，所有包都视为非本地包），项目自用包(非网上的包, 即作为项目的一份，而不是从网上去clone，从而保证版本稳定等优点)必须在vendor下, 项目必须放在$GOPATH/src/xx下，等
 
 作为本地包：放在非$GOPATH/src/{projectName}下
 优点： 比较灵活，项目放哪都可以（不一定要在$GOPATH/src/{projectName}下），import可以使用相对路径，自己管理自用包的位置
-缺点： 无法享受go install, go get 等工具，无法使用go install,因为go install项目必须严格在$GOPATH的src下，这也就无法享受go install工具带来的好处（如相对go build,go install保留了引用包的编译链接库.a文件，go install 会放到$GOPATH/pkg下，以后编译相应的包不发生变化不重新编译，提高了编译速度）, go get也无法很好的享用，go get会递归git clone 到$GOPATH/src下，并运行go install 
+缺点： 无法享受go install, go get 等工具，无法使用go install，因为go install项目必须严格在$GOPATH的src下，这也就无法享受go install工具带来的好处（如相对go build,go install保留了引用包的编译链接库.a文件，go install 会放到$GOPATH/pkg下，以后编译相应的包不发生变化不重新编译，提高了编译速度）, go get也无法很好的享用，go get会递归git clone 到$GOPATH/src下，并运行go install 
+
 
 go工程结构： 同一代码以上方案只能取其一而不能共用(主要是相对路径包和vendor的互相不兼容)，如用了在第二种方案中用了相对路径的import，项目放到$GOPATH下则build不能够通过, 如在第一种方案中用了vendor的方案，则一旦离开官方项目目录结构，作为本地包，build的时候也不会去寻找vendor目录下的包
 
@@ -379,3 +380,106 @@ byte数组不能直接转string， 如 var a [5]byte; string(a)
 
 静态类型语言是指在'编译时'变量的数据类型即可确定的语言
 动态类型语言是在'运行时'确定数据类型的语言
+
+
+golang:
+type foo struct{
+..
+}
+
+reflect.TypeOf(new(foo)) => *foo
+reflect.TypeOf(foo{}) => foo
+
+.git/index存放的是暂存区的快照（一个类似tree对象的)
+
+git submodule 对go get 有效
+
+只能给本地类型定义方法，即不能给一个导入包的导出类型在包外为他添加一个方法,只能在他包内
+
+log与fmt: log多了日期时间
+log.Println("hello"):
+2018/03/15 10:31:43 hello
+fmt.Println("hello"):
+hello
+
+http
+req:
+GET /dnakit/wangrongda HTTP/1.1\r\nUser-Agent: chrome\r\nAccept: application/json, text/plain\r\n\r\nbody
+res:
+HTTP/1.1 432 Not Found\r\nContent-Length: 19a\r\n\r\nbody
+
+码点表示字符
+"世界"
+"\u4e16"和 '\u4e16' 都表示 ‘世’，
+但他们的二进制数据都不一样，前者占用3字节，而后者占用4字节
+后者是unicode(固定长rune)， 前者是经过UTF-8编码
+
+只能用16进制表示
+\x 表示8bit码点，两个16进制
+\u 表示16bit码点, 4个16进制
+\U 表示32bit码点, 8个16进制
+
+字面量
+二进制： 无
+八进制字面量： 数字0开头
+十六进制字面量： 0x开头
+
+len(string)取的是字符串的byte数： len("hello王") => 8 (王被编码为utf8占三个字节)
+要取字符串的字符个数：
+1. utf8.RuneCountInString("hello王") => 6 (import "unicode/utf8")
+2. len([]rune("hello王")) => 6
+
+HTTP/1.1:
+首先, 来说说什么是Content-Length,在http的协议中Content-Length首部告诉浏览器报文中实体主体的大小。这个大小是包含了内容编码的，比如对文件进行了gzip压缩，Content-Length就是压缩后的大小（这点对我们编写服务器非常重要）。除非使用了分块编码，否则Content-Length首部就是带有实体主体的报文必须使用的。使用Content-Length首部是为了能够检测出服务器崩溃而导致的报文截尾，并对共享持久连接的多个报文进行正确分段.
+
+相应数据包协议头Content-Length指定大小x(B) > body实际大小： 正常(body为空时会出错，body为空必须content-length: 0)
+                                           < body实际大小： 解析出错
+
+
+golang: 顺序不能倒，Header().Set()必须在WriteHeader前，否则无效; WriteHeader必须在Write()前, 因为发送请求体前必须把报头信息放在前面,否则后面设置的header无效，发送的header为默认的（如content-length根据发送的主体算出等等，由http包处理）
+w.Header().Set("Content-Length", "5")
+w.WriteHeader(200)
+w.Write()
+
+golang:
+json字节序反序列化：
+ json.Unmarshal([]byte, 可以是结构体或map[string]string)
+
+
+gorm: 
+匿名结构体会直接嵌入作为表字段
+非嵌入则关联另一张表 1对1
+类型为数组： 1对多或多对多
+type Dog struct {
+//	ID uint `gorm:"primary_key;AUTO_INCREMENT"`
+	Color3 string
+	Leg3 int
+}
+type Cat struct {
+	UserMm uint
+	ID uint `gorm:"primary_key;AUTO_INCREMENT"`
+	Color string
+	Leg int
+}
+
+type User struct {
+	ID  uint `gorm:"primary_key;AUTO_INCREMENT"`
+	Age int `gorm:"-"`
+	Name string `gorm:"size:225;"`
+//	Cat Cat
+	Dog
+	Cats []Cat `gorm:"foreignkey:user_mm"`
+}
+
+n2n的各edge之间传输数据
+
+是否走 s-node
+
+完全取决于，两个 edge 节点所在的网络环境
+
+1、如果是公网IP，则点对点传输数据，无需s-node介入
+
+2、如果两端的路由器都是圆锥形NAT，注意「都是」圆锥形的NAT的话，两者之间可以直接传输数据，无需s-node介入
+
+3、有一方面的设备在一个对称型的路由器后面，则无法完成点对点的直接传输，流量都需要superNode的中转。
+
