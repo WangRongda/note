@@ -483,3 +483,24 @@ n2n的各edge之间传输数据
 
 3、有一方面的设备在一个对称型的路由器后面，则无法完成点对点的直接传输，流量都需要superNode的中转。
 
+./supernode -f -v -l 8899
+
+
+wild notion:
+1. 不同于UTF-8的编码方式：
+使用字节最后一位为标志，如0为字符结束，1为还没结束。
+
+printf: 格式化输出到[[标准输出]]
+scanf: 从[[标准输入]]中格式化获取值到变量
+
+fprintf: 格式化输出到[[fd]]
+fscanf: 从[[fd]]中格式化获取值到变量
+
+sprintf: 格式化输出到[[字符串]]
+sscanf: 从[[字符串]]格式化读取值到变量
+
+git update-index --assume-unchanged
+
+mysql从第几条到第几条: (第一个数为第几条（从0开始）， 第二个为查几条）
+ select * from table limit 0, n; //前n条
+select * from table limit m, n; // 第m+1条到第m+n 
