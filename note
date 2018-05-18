@@ -504,3 +504,19 @@ git update-index --assume-unchanged
 mysql从第几条到第几条: (第一个数为第几条（从0开始）， 第二个为查几条）
  select * from table limit 0, n; //前n条
 select * from table limit m, n; // 第m+1条到第m+n 
+
+URL中要表示字符'/'需转义：%2f，如果%2f依旧会被转回分隔符/，则将'%'也编码
+
+
+备份:
+tar --exclude='/home/d/ubuntu' -vcf - /etc /home /var /usr/local/bin   | xz -9 -T0 -c - > backup.tar.xz
+
+JS资源的请求和执行顺序：
+<html> ...
+<script src="url1"></script>
+<script src="url2"></script>
+...
+</html>
+
+如上 url1和url2会异步请求（同时），url2可能会比url1先响应，但是执行是同步的，url2的js拿到了也要等url1的js执行完（两种情况：url1成功响应并执行，2. url1响应失败）才会执行url2的脚本
+url1执行出错(如某条语句错了，不往下执行url1），不影响url2的执行(独立的，但是在同一个js主线程，有共同的作用域，异步队列）。
