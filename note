@@ -565,3 +565,9 @@ r.Form // map[string][]string 存放url参数和formdata参数,合2为一
 以上三个需要r.ParseForm(url)或r.ParseMultipartForm()(all)后才会存放到
 
 r.FormValue(field) //从r.Form(内置r.ParseMultipartForm)里拿，没有的会返回空字符串，所以无法判断字段是 没有传还是传空值
+
+
+
+golang通过反射设置结构体字段的值：
+结构体字段必须是首字母大写，否则会出现：panic: reflect: reflect.Value.Set using value obtained using unexported field
+在Golang中首字母的大小写代表着访问权限，首字母小写则包外无法访问
