@@ -622,6 +622,8 @@ func test() {
 
 当panic异常发生时，当前goroutine的当前函数会中断运行，并立即执行该函数中被延迟的函数（defer机制）, 若被panic被defer捕获（defer中调用了内置函数recover()), 出该函数到外层函数，外层函数正常运行，若panic没有被捕获，出该函数到外层函数，外层函数中断，并立即执行defer，一次循环, 直到线程主函数defer结束，panic还没有被捕获。进入底层defer会去调用runtime的堆栈信息括 panic value和函数调用的堆栈跟踪信息, 作为日志打出，到此程序中止（在这之前其他goroutine照常执行(除了从主函数退出或者直接终止程序之外，没有其它的编程方法能够让一个goroutine来打断另一个的执行),若其他gorroutine的panic比他快，则该goroutine会在defer过程中被中止也是有可能）。
 
+defer的执行顺序，每经过一个defer，将该defer函数压如一个栈顶，等defer所在函数return时，依次从栈顶执行下来(该函数),直到defer不属于该函数（即外层函数）,外层函数继续执行，直到return...
+panic 异常后会中断所在函数的继续执行，开始上面的defer栈执行, panic会传递到每一个执行过的defer，每一个经过的defer都可以捕获，若某个defer没有捕获，则继续执行下一个defer，若被某个defer捕获，则到下一个函数作用域，恢复程序流（不捕获的话，到下一个函数作用域，同样中断，直接执行defer)
 
 KB = 10^3B = 1000B
 KiB = 2^10B = 1024B
