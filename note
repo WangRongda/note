@@ -564,7 +564,7 @@ r.URL.Query() // map[string][]string: 存放url的参数
 r.Form // map[string][]string 存放url参数和formdata参数,合2为一
 以上三个需要r.ParseForm(url)或r.ParseMultipartForm()(all)后才会存放到
 
-r.FormValue(field) //从r.Form(内置r.ParseMultipartForm)里拿，没有的会返回空字符串，所以无法判断字段是 没有传还是传空值
+r.FormValue(field) //从r.Form(内置r.ParseMultipartForm, 但不会解析file)里拿，没有的会返回空字符串，所以无法判断字段是 没有传还是传空值
 
 
 
@@ -579,7 +579,7 @@ import "packname"
 若GOPATH下有两个packname, 会用第一个GOPATH里的
 
 
-:= 只作用于局部变量，符号左边的被赋值的n个变量只会是局部变量（已存在的会用已存在的局部变量，不存在的会创建改局部变量，至少要有一个不存在）,也就是说不可能是全局变量或作用域以外（如闭包外）的变量，若左操作值有一个叫foo的变量, 且该作用域内没有foo的局部变量，全局有一个叫foo的全局变量，但他不会视为foo存在，仍会创建名为foo的局部变量。
+:= 只作用于局部变量(块作用域)，符号左边的被赋值的n个变量只会是局部变量（已存在的会用已存在的局部变量，不存在的会创建改局部变量，至少要有一个不存在）,也就是说不可能是全局变量或作用域以外（如闭包外）的变量，若左操作值有一个叫foo的变量, 且该作用域内没有foo的局部变量，全局有一个叫foo的全局变量，但他不会视为foo存在，仍会创建名为foo的局部变量。
 
 接收多返回值的 变量，若想赋给全局变量或外面作用域的变量，记住只能用"="而不是":=", 否则同名局部变量会被创建
 若其他变量里有未声明变量，只能通过提前声明。
@@ -590,6 +590,16 @@ var foo string
 func xx() {
    var err error //提前声明err
    foo, err = xxx //无法在这里使用 :=
+}
+==================================
+example2:
+func main() {
+    var foo string
+    if true {
+       var err error
+       foo, err = xxx //上面的foo
+       foo, err := xxx //新的foo
+    }
 }
 
 
@@ -746,3 +756,35 @@ OS是无法识别协程的，只能识别是线程，协成是由开发人员自
 协程的缺点：
 因为是在单线程中，所以无法利用多核CPU的资源；协程如果要使用多核CPU的话，那么就需要先启多个进程，在每个进程下启一个线程，然后在线程下在启协程。
 在单线程下实现的并发效果，就是协程。
+
+
+如果defer后面直接接一个语句如下，除了函数不会执行，参数表达式等会执行或用现在的值（也就是args如果你在后面赋值了，到defer的时候是赋值前的）
+defer funcname(args)
+
+
+str := "1234"
+fmt.Println(str[4:]) //不报错
+fmt.Println(str[5:]) //越界
+fmt.Println(str[4]) //越界
+
+
+url.ParseQuery("key=value&key=value&key=value") => url.Values //传入的不是整个url，而是rul参数部分， 如传入 /abc/nba?key1=value1&key2=value2 => key1会变成/abc/nba?key1
+instead:
+r, err := url.Parse("/abc/nba?key1=value1&key2=value2")
+r.Query() => url.Values
+
+form-data指multipart form, 是经过某种格式表示，有分隔符, 一般将文件作为另一种类型：
+----------------------------399289160727635154297005
+Content-Disposition: form-data; name="infocn"
+
+text...
+----------------------------399289160727635154297005
+Content-Disposition: form-data; name="file"; filename="key.bak"
+Content-Type: application/octet-stream
+
+file content ...
+----------------------------399289160727635154297005
+
+
+x-www-form-urlencoded , 格式和url参数一样，只不过是放在body里， 参数值有些字符汇编编码如 &, /,...
+两者都是放在body里，只是格式不一样, 带文件的一般都用第一种,
