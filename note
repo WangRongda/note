@@ -564,8 +564,13 @@ r.URL.Query() // map[string][]string: 存放url的参数
 r.Form // map[string][]string 存放url参数和formdata参数,合2为一
 以上三个需要r.ParseForm(url)或r.ParseMultipartForm()(all)后才会存放到
 
-r.FormValue(field) //从r.Form(内置r.ParseMultipartForm, 但不会解析file)里拿，没有的会返回空字符串，所以无法判断字段是 没有传还是传空值
+r.ParseForm和ParseMultipartForm的区别:
+r.ParseMultipartForm(maxMemory) //ParseMultiparForm要传一个参数，指定最大值使用内存， 调用这个函数会解析整个请求体（multipart/form-data格式），包括文件部分会存到内存，超出指定的maxMemory，文件剩下的部分存到磁盘缓存文件，如果请求体不是个multipart/form-data而是一个x-www-form-urlencode的话，会直接调用ParseForm(),
+和ParseForm一样，也是先解析url参数
 
+r.ParseForm() //先解析url参数，然后解析请求体(x-www-form-url)
+
+r.FormValue(field) //从r.Form(内置r.ParseMultipartForm)里拿，没有的会返回空字符串，所以无法判断字段是 没有传还是传空值
 
 
 golang通过反射设置结构体字段的值：
@@ -803,11 +808,47 @@ j, _ = in.(int) // 不会panic, 转换失败j值置空置（这里为0）
 
 
 err = json.Unmarshal 结构体字段和json字段匹配规则: 
-1. 结构体字段的tag 里和 json里字段名 完全匹配（分大小写）, 优先赋值给该结构体字段
-2. 1中没有满足的结构体字段，结构体字段里Key值和json字段名完全匹配， 优先赋值给该结构体字段
-3. 2中没有满足的结构体字段，结构体字段名或tag值里和json字段名 不分大小写 匹配上的 第一个结构体
+1. 看tag, 有完全匹配: 结构体字段的有tag 里和 json里字段名 完全匹配（分大小写）, 优先赋值给该结构体字段
+2. 看没有tag, 字段名有完全匹配: 1中没有满足的结构体字段，结构体字段里Key值(该字段没有json tag) 和json字段名完全匹配， 优先赋值给该结构体字段
+3. 字段名(有tag的只能看tag)或tag不分大小写匹配: 2中没有满足的结构体字段，结构体字段名或tag值里和json字段名 不分大小写 匹配上的 第一个结构体(同样不带tag的可理解为他们的tag为结构体字段名字，然后直接取第一个 tag值和json字段名 不分大小写 匹配的)
 4. 3中没有，则该json字段找不到对应的结构体字段
 （一个json字段只可能会赋值给一个结构体字段，即优先的，其他满足的不会赋值，在赋值的时候，类型不匹配会 err ！= nil, 找不到（第4步）不会error，因为没有走到赋值这一步）
 
 json.Marshal比较简单：
 有tag用tag名，没tag用字段名
+
+u, err := url.Parse(...)
+u.Query() //会返回一个新的url.Values !!!
+
+
+map是 真×引用传递, 引用赋值，要copy另一份map只能遍历赋值
+
+len(x) : 得x数组的元素个数（长度），len一个字符串指[]byte的个数
+
+
+typescript:
+ - constructor的public参数会自动创建作为成员变量
+ - 0xf00d, 0b1010, 0o744
+ - 枚举值未赋值的在前一个枚举值+1,
+	enum Color { Red = 1.1, Green}
+	let c :Color = Color.Green
+	console.log(c) //2.1
+ - 枚举值（Number）可以作为索引，得枚举名称（字符串）
+	enum Color { Red = 1.1, Green}
+	let c :String = Color[2.1]
+	console.log(c) //2.1
+
+
+r.Header map[string][]string{} 是引用，r.Header.Get() r.Header.Set() 调用的是底层的数据结构，r.Header = 另一个新的map[string][]string时，r.Header.Get等方法不会取新的，会取原来的，导致不一致
+
+for (let i=0; i<10; i++) {
+    setTimeout(function() { console.log(i); }, 100 * i);
+}
+//output: 1 2 3 4 ... 10 
+for初始化用let声明的变量，作用域是循环体和收尾，且其他次循环体的i无法改变当前循环体i的值，互不影响: 当第一次进入循环体，至离开第一次循环体(包括收尾语句),则第二次循环体的i是另一个单独的局部变量，他的值为离开第一次循环体时i的只，之后第一次循环体的i值改变，不影响第二次循环的i，第二次循环的i值的改变也不影响第一次循环体的i(事实上执行几次循环，就会创建多少个i变量)
+
+for (var i=0; i<10; i++) {
+    setTimeout(function() { console.log(i); }, 100 * i);
+}
+// output: 10 10 10 ... 10
+用var的话就只会有一个i变量,那么在第一个循环体开始执行settimeout的函数时，循环体早就结束了，i的值是10,所有都输出10
