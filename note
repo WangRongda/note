@@ -841,17 +841,43 @@ typescript:
 
 r.Header map[string][]string{} 是引用，r.Header.Get() r.Header.Set() 调用的是底层的数据结构，r.Header = 另一个新的map[string][]string时，r.Header.Get等方法不会取新的，会取原来的，导致不一致
 
+
+
+js作用域篇:
+var: 
+var声明的变量在所在的function, module, namespace, or global scope 都会被提前(赋值不提前)，也就是所某个变量被var声明时，无论他在哪，第一行，100行，都会被提到最上面，且不赋值; 且无论var作用在同一个变量几次，都一样, 所以var没有块作用域
+如：
+
+行数
+...
+...
+100 var foo = 5;
+相当于：
+1   var foo;
+...
+100 foo = 5;
+
+
+
+var 没有块作用域导致的问题：
+for (var i=0; i<10; i++) {
+    setTimeout(function() { console.log(i); }, 100 * i);
+}
+相当于(上面说到的var提升)：
+var i;
+...
+for (i=0; i<10; i++){
+...
+}
+// output: 10 10 10 ... 10
+用var的话就只会有一个i变量,那么在第一个循环体开始执行settimeout的函数时，循环体早就结束了，i的值是10,所有都输出10
+
+
 for (let i=0; i<10; i++) {
     setTimeout(function() { console.log(i); }, 100 * i);
 }
 //output: 1 2 3 4 ... 10 
-for初始化用let声明的变量，作用域是循环体和收尾，且其他次循环体的i无法改变当前循环体i的值，互不影响: 当第一次进入循环体，至离开第一次循环体(包括收尾语句),则第二次循环体的i是另一个单独的局部变量，他的值为离开第一次循环体时i的只，之后第一次循环体的i值改变，不影响第二次循环的i，第二次循环的i值的改变也不影响第一次循环体的i(事实上执行几次循环，就会创建多少个i变量)
-
-for (var i=0; i<10; i++) {
-    setTimeout(function() { console.log(i); }, 100 * i);
-}
-// output: 10 10 10 ... 10
-用var的话就只会有一个i变量,那么在第一个循环体开始执行settimeout的函数时，循环体早就结束了，i的值是10,所有都输出10
+for初始化用let声明的变量，作用域是循环体和收尾(块作用域)，且其他次循环体的i无法改变当前循环体i的值，互不影响: 当第一次进入循环体，至离开第一次循环体(包括收尾语句),则第二次循环体的i是另一个单独的局部变量，他的值为离开第一次循环体时i的只，之后第一次循环体的i值改变，不影响第二次循环的i，第二次循环的i值的改变也不影响第一次循环体的i(事实上执行几次循环，就会创建多少个i变量, 这一点和其他语言又不一样，golang也是块作用域，但是for的i也只会有一个)
 
 
 
@@ -864,13 +890,20 @@ for (var i=0; i<10; i=++ii) {
     let ii = i;
     setTimeout(function() { console.log(ii); }, 100 * ii);
 }
-=======================================================
+============================================================
 for (var i=0; i<10; i++) {
     setTimeout(function() { console.log(i); }, 100 * i);
 }
 有点像：
 for(let i = 0; i < 10;i=++a) {
-    var a = i;
+    var a = i; //被提升
     setTimeout(function() { console.log(a); }, 1000 * a);
+}
+============================================================
+没有let的时候怎么办： (让i进入另一个函数作用域）
+for (var i = 0; i < 10; i++) {
+    (function(i) {
+        setTimeout(function() { console.log(i); }, 100 * i);
+    })(i);
 }
 
