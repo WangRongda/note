@@ -852,3 +852,25 @@ for (var i=0; i<10; i++) {
 }
 // output: 10 10 10 ... 10
 用var的话就只会有一个i变量,那么在第一个循环体开始执行settimeout的函数时，循环体早就结束了，i的值是10,所有都输出10
+
+
+
+============================================================
+for (let i=0; i<10; i++) {
+    setTimeout(function() { console.log(i); }, 100 * i);
+}
+有点像：
+for (var i=0; i<10; i=++ii) {
+    let ii = i;
+    setTimeout(function() { console.log(ii); }, 100 * ii);
+}
+=======================================================
+for (var i=0; i<10; i++) {
+    setTimeout(function() { console.log(i); }, 100 * i);
+}
+有点像：
+for(let i = 0; i < 10;i=++a) {
+    var a = i;
+    setTimeout(function() { console.log(a); }, 1000 * a);
+}
+
