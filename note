@@ -909,3 +909,34 @@ for (var i = 0; i < 10; i++) {
 
 
 使用sqlite3驱动的memory模式注意业务更新你插入的记录
+
+
+
+let 块作用域： 只要在自己声明后，自己所在的块作用域环境内都可访问，不论代码先后(hoist,但有TDZ)，若在声明前访问，则会暂时死区机制而报错
+var 函数作用域： 只要作用域内有var声明的变量，该变量在所在作用域环境内都可访问，不论声明前后(hoist, 但无TDZ)
+
+
+let声明的变量在所在块整个作用域都可访问，子块内可声明同名let变量覆盖，以下代码证实了，let有hoist机制, 虽然还没运行到let a= "hello"，但外面的a已经被覆盖，取而代之的是子作用域的a，但未到运行声明语句，触发了TDZ
+let a = 1
+{
+        console.log(a) //error 
+        let a = "hello"
+        console.log(a)
+}
+============================
+let a = 1
+{
+        console.log(a) //ok
+        //let a = "hello"
+        console.log(a)
+}
+
+=============================
+let a = 1 //块作用域不能重复声明(块范围报错，一行都不会执行)
+{
+        console.log(a) 
+        var a = "hello" 
+        console.log(a)
+}
+
+同一个块作用域不能用let重复声明（包括被var声明过的）, 子块可覆盖
