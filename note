@@ -1016,5 +1016,5 @@ let a = 1 //块作用域不能重复声明(语法错误：js文件范围报错�
 1.检查语法：如是否有重复声明的标识符(var重复除外)
 2.进入一个function-scope(block-scope作为一部分)环境，将所有当前func-scope内的声明变量(var)注册到这个scope环境,以及block-scope内声明的变量(let,const)注册进来
 3.进入一个block-scope环境，将当前block-scope内声明的变量注册进来
-4.依次执行该block-scope的语句，当访问一个变量时，从该scope环境的注册过的变量找，若找到，判断是否有TDZ是否能访问，若没有，继续向上block-scope(包含当前scope的scope)找，直到顶层，
+4.依次执行该block-scope的语句，当访问一个变量时，从该scope环境的注册过的变量找，若找到，判断是否有TDZ是否能访问，若没有，继续向上block-scope(包含当前scope的scope)找，直到顶层，没有找到，报未定义ReferenceError: bss is not define(TDZ报ReferenceError: can't access lexical declaration `a' before initialization)
 
